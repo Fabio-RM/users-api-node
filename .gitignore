@@ -1,0 +1,4 @@
+# Container folders
+mysql_data
+
+.env

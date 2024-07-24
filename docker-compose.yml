@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  users-api-db:
+    image: mysql:9.0
+    container_name: users-api-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "33061:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+      - ./SQL/init.sql:/docker-entrypoint-initdb.d/init.sql
+  
+  users-api-service:
+    build: ./app
+    container_name: users-api-service
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_HOST=${DB_HOST}
+    depends_on:
+      - users-api-db
+    volumes:
+      - ./app:/srv/app
+      
+volumes:
+  mysql_data:
+  users_api_data:
