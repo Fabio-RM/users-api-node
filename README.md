@@ -60,10 +60,11 @@ And run the Sequelize migrations:
 
 ## How to use the API
 
-There are only 2 routes:
+There are only 3 routes:
 
 - /api/v1/users/create: used for create a new user
 - /api/v1/users/login: used for receive a JWT if user's credentials are correct
+- /api/v1/users/verify-token: used for check if a JWT is valid
 
 #### Create user
 
@@ -89,3 +90,9 @@ You need to send a POST request with a JSON with the following parameters:
 ```
 
 The response should return a JSON with a JWT token.
+
+#### Verify token
+
+After logged in, you need to send a GET request with a HTTP Header 'Authorization' which value is the token generated on login process:  
+
+The response should return a JSON with a user id, name and email refered by the token.
