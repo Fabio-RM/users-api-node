@@ -26,9 +26,3 @@ services:
       - DB_HOST=${DB_HOST}
     depends_on:
       - users-api-db
-    volumes:
-      - ./app:/srv/app
-      
-volumes:
-  mysql_data:
-  users_api_data:
