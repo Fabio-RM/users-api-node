@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt, { compare } from 'bcryptjs';
 import { sign } from '../services/jwt';
 import { User } from "../database/models/User";
+import jwt from "jsonwebtoken";
 
 class UserController {
 
@@ -54,6 +55,24 @@ class UserController {
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: "Error logging in user" });
+        }
+    }
+
+
+    public async verifyToken(req: Request, res: Response): Promise<Response> {
+        const token = req.header('Authorization');
+        if (!token) return res.status(401).json({ error: "Missing token" });
+
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string, email: string };
+            const user = await User.findByPk(decoded.id, { attributes: ['id', 'name', 'email'] });
+
+            if (!user) return res.status(404).json({ error: "User not found" });
+            
+            return res.status(200).json({ user });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: "Error verifying token" });
         }
     }
 }
