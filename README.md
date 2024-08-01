@@ -18,6 +18,7 @@ or:
 #### 1. Using npm
 
 Clone the repository:
+
 `git clone https://github.com/Fabio-RM/users-api-node.git`
 
 Install dependencies and compile TypeScript:
@@ -30,25 +31,31 @@ npx tsc
 Inside de 'app' folder, rename the '.env.exemple' file to '.env' and configure the database parameters according to your environment.
 
 Make the Sequelize migrations:
+
 `npx sequelize-cli db:migrate`
 
 Run it:
+
 `npm start`
 
 #### 2. Using Docker Compose
 
 Clone the repository:
+
 `git clone https://github.com/Fabio-RM/users-api-node.git`
 
 Rename the '.env.exemple' file to '.env' and configure the database parameters according to your environment.
 
 Run Docker Compose:
+
 `docker-compose up -d`
 
 Wait until MySQL service is up, then connect to the users-api-service container:
+
 `docker-compose run --rm users-api-service sh`
 
 And run the Sequelize migrations:
+
 `npx sequelize-cli db:migrate`
 
 ## How to use the API
