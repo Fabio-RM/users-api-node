@@ -27,7 +27,7 @@ class UserController {
         try {
             const hashedPassword = await bcrypt.hash(password, 10);
             const newUser = await User.create({ name, email, password: hashedPassword });
-            return res.status(201).json(newUser);
+            return res.status(201).json({ success: true, newUser });
         } catch (error) {
             return res.status(500).json({ error: "Error creating user"});
         }
@@ -51,7 +51,7 @@ class UserController {
                 return res.status(401).json({ error: "Invalid email or password" });
         
             const token = sign({ id: user.id, email: user.email });
-            return res.status(200).json({ token });
+            return res.status(200).json({ success: true, token });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: "Error logging in user" });
@@ -69,7 +69,7 @@ class UserController {
 
             if (!user) return res.status(404).json({ error: "User not found" });
             
-            return res.status(200).json({ user });
+            return res.status(200).json({ success: true, user });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: "Error verifying token" });
