@@ -1,13 +1,18 @@
 import { Request, Response } from "express";
 import bcrypt, { compare } from 'bcryptjs';
+import dotenv from 'dotenv/config'
 import { sign } from '../services/jwt';
 import { User } from "../database/models/User";
 import jwt from "jsonwebtoken";
+import s3 from "../config/s3-bucket";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+
 
 class UserController {
 
     public async create(req: Request, res: Response): Promise<Response> {
         const { name, email, password } = req.body;
+        let avatarFileName = null;
 
         // Checks required fields
         if (!name || !email || !password) {
@@ -28,15 +33,38 @@ class UserController {
 
         // Creates user
         try {
+            // If user uploads an avatar image, then uploads to S3 bucket
+            if (req.file) {
+                const fileExtension = req.file.originalname.split('.').pop();
+                avatarFileName = crypto.randomUUID() + '.' + fileExtension;
+
+                const command = new PutObjectCommand({
+                    Bucket: process.env.S3_BUCKET_NAME,
+                    Key: String(avatarFileName),
+                    Body: req.file.buffer,
+                    ContentType: req.file.mimetype,
+                });
+
+                try {
+                    await s3.send(command);
+                } catch (error) {
+                    console.error("Error uploading file:", error);
+                    throw new Error("Error uploading file to S3");
+                }
+            }
+
+            // Add new user to database
             const hashedPassword = await bcrypt.hash(password, 10);
-            const newUser = await User.create({ name, email, password: hashedPassword });
+            await User.create({ name, email, password: hashedPassword, avatar: avatarFileName });
+
             return res.status(201).json({ success: true, message: "User created successfully" });
         } catch (error) {
+            console.error(error);
             return res.status(500).json({ message: "Error creating user"});
         }
     }
 
-    
+
     public async login(req: Request, res: Response): Promise<Response> {
         const { email, password } = req.body;
         

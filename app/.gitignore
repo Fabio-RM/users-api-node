@@ -131,3 +131,6 @@ dist
 
 # Typescript builds
 build/
+
+# Public directory
+public/
