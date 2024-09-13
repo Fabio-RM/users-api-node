@@ -1,5 +1,6 @@
 import express from 'express'
 import UserRoutes from './routes/UserRoutes';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import corsOptions from './config/cors';
 
@@ -9,7 +10,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors(corsOptions));
 
 app.use(express.json());
- 
+
+app.use(cookieParser());
+
 app.use('/api/v1', UserRoutes);
 
 app.listen(PORT, async () => {

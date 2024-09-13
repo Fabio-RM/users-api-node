@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt, { compare } from 'bcryptjs';
 import dotenv from 'dotenv/config'
-import { sign } from '../services/jwt';
+import { generateAccessToken, generateRefreshToken } from '../services/jwt';
 import { User } from "../database/models/User";
 import jwt from "jsonwebtoken";
 import s3 from "../config/s3-bucket";
@@ -83,12 +83,58 @@ class UserController {
             if (!passwordMatches) 
                 return res.status(401).json({ message: "Invalid email or password" });
         
-            const token = sign({ id: user.id, email: user.email });
+            // Generates JWT Tokens, stores into DB and creates an HTTP-Only cookie
+            const accessToken = generateAccessToken(user);
+            const refreshToken = generateRefreshToken(user);
 
-            return res.status(200).json({ success: true, token });
+            await User.update({ token: refreshToken },
+                              { where: { email: user.email } });
+
+            res.cookie('refreshToken', refreshToken, {httpOnly: true, secure: false, maxAge: 24*60*60*1000 });
+
+            return res.status(200).json({ success: true, accessToken });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "Error logging in user" });
+        }
+    }
+
+
+    public async logout(req: Request, res: Response): Promise<Response> {
+        const { refreshToken } = req.cookies;
+
+        if (!refreshToken) return res.status(400).json({ error: 'No refresh token provided' });
+        
+        try {
+            await User.update({ token: null }, { where: { token: refreshToken } });
+    
+            res.clearCookie('refreshToken', { httpOnly: true, secure: false, maxAge: 24*60*60*1000 });
+        } catch {
+            return res.status(500).json({ message: "Error logging out user" });
+        }
+
+        return res.status(200).json({ message: "Logged out" });
+    }
+
+
+    public async refreshToken(req: Request, res: Response): Promise<Response> {
+        const { refreshToken } = req.cookies;
+
+        if (!refreshToken) return res.status(401).json({ message: "Missing token" });
+
+        try {
+            // Checks if token exists on DB
+            const user = await User.findOne({ where: { token: refreshToken} });
+        
+            if (!user || user.token != refreshToken) return res.status(403).json({ message: "Forbidden"});
+
+            // Generates a new access token
+            const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH_TOKEN!);
+            const accessToken = generateAccessToken(decoded);
+
+            return res.status(200).json({ accessToken });
+        } catch (error) {
+            return res.status(403).json({ error: "Invalid or expired refresh token" });
         }
     }
 
